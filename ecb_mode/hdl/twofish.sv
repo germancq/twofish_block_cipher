@@ -199,13 +199,13 @@ module twofish (
 
   //contador
   logic [7:0] counter_in;
-  mux2 #(
+  mux #(
       .N(8)
   ) mux_0 (
-      .a  (8'h0),
-      .b  (8'hF),
+      .a(8'h0),
+      .b(8'hF),
       .sel(enc_dec),
-      .c  (counter_in)
+      .dout(counter_in)
   );
   logic [7:0] counter_out;
   logic up_counter;
@@ -443,13 +443,13 @@ module twofish_stage (
   wire  [31:0] Z0_input_0;
   logic [31:0] Z0_output_0;
 
-  mux2 #(
+  mux #(
       .N(32)
   ) m0 (
-      .a  (R2),
-      .b  ({R2[30:0], R2[31]}),
+      .a(R2),
+      .b({R2[30:0], R2[31]}),
       .sel(enc_dec),
-      .c  (Z0_input_0)
+      .dout(Z0_input_0)
   );
 
   //assign Z0_input_0 = enc_dec == 1'b1 ? {R2[30:0],R2[31]} : R2;
@@ -467,13 +467,13 @@ module twofish_stage (
   logic [31:0] Z1_output_0;
   //assign Z1_input_0 = enc_dec == 1'b1 ? R3 : {R3[30:0],R3[31]};
 
-  mux2 #(
+  mux #(
       .N(32)
   ) m1 (
-      .a  ({R3[30:0], R3[31]}),
-      .b  (R3),
+      .a({R3[30:0], R3[31]}),
+      .b(R3),
       .sel(enc_dec),
-      .c  (Z1_input_0)
+      .dout(Z1_input_0)
   );
   galois_adder #(
       .N(32)
@@ -488,23 +488,23 @@ module twofish_stage (
 
 
 
-  mux2 #(
+  mux #(
       .N(32)
   ) m3 (
-      .a  ({Z0_output_0[0], Z0_output_0[31:1]}),
-      .b  (Z0_output_0),
+      .a({Z0_output_0[0], Z0_output_0[31:1]}),
+      .b(Z0_output_0),
       .sel(enc_dec),
-      .c  (Z0)
+      .dout(Z0)
   );
 
 
-  mux2 #(
+  mux #(
       .N(32)
   ) m4 (
-      .a  (Z1_output_0),
-      .b  ({Z1_output_0[0], Z1_output_0[31:1]}),
+      .a(Z1_output_0),
+      .b({Z1_output_0[0], Z1_output_0[31:1]}),
       .sel(enc_dec),
-      .c  (Z1)
+      .dout(Z1)
   );
 
 
@@ -665,8 +665,9 @@ module f_function (
   ) at00 (
       .a(T0),
       .b(T1),
-      .s(sum_output_0),
-      .c()
+      .cin(0),
+      .sum(sum_output_0),
+      .cout()
   );
 
   adder #(
@@ -674,8 +675,9 @@ module f_function (
   ) at01 (
       .a(sum_output_0),
       .b(K0),
-      .s(F0),
-      .c()
+      .cin(0),
+      .sum(F0),
+      .cout()
   );
 
   adder #(
@@ -683,8 +685,9 @@ module f_function (
   ) at10 (
       .a(T0),
       .b(T1 << 1),
-      .s(sum_output_1),
-      .c()
+      .cin(0),
+      .sum(sum_output_1),
+      .cout()
   );
 
   adder #(
@@ -692,8 +695,9 @@ module f_function (
   ) at11 (
       .a(sum_output_1),
       .b(K1),
-      .s(F1),
-      .c()
+      .cin(0),
+      .sum(F1),
+      .cout()
   );
 
 
@@ -736,8 +740,9 @@ module expanded_key_words (
   ) ai (
       .a(m << 1),
       .b(p),
-      .s(h1_input),
-      .c()
+      .cin(0),
+      .sum(h1_input),
+      .cout()
   );
 
   h_function h1 (
@@ -751,8 +756,9 @@ module expanded_key_words (
   ) a0 (
       .a(A),
       .b(B),
-      .s(K_0),
-      .c()
+      .cin(0),
+      .sum(K_0),
+      .cout()
   );
 
   adder #(
@@ -760,8 +766,9 @@ module expanded_key_words (
   ) a1 (
       .a(A),
       .b(B << 1),
-      .s(adder_out),
-      .c()
+      .cin(0),
+      .sum(adder_out),
+      .cout()
   );
 
   assign K_1 = {adder_out[22:0], adder_out[31:23]};
