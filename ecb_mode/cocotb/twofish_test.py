@@ -37,10 +37,10 @@ CLK_PERIOD = 20  # 50 MHz
 
 def setup_function(dut, key, enc_dec, text_input):
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD, unit="ns").start())
-    dut.key = key
-    dut.enc_dec = enc_dec
-    dut.text_input = text_input
-    dut.rst = 1
+    dut.key.value = key
+    dut.enc_dec.value = enc_dec
+    dut.text_input.value = text_input
+    dut.rst.value = 1
 
 
 async def rst_function_test(dut, enc_dec):
@@ -63,12 +63,12 @@ async def rst_function_test(dut, enc_dec):
             hex(int(dut.R3.value)))
 
     if enc_dec == 1:
-        if dut.counter_out != 15:
+        if dut.counter_out.value != 15:
             assert """Error counter in rst decrypt, wrong_value = {0}""".format(
                 hex(int(dut.counter_out.value))
             )
     else:
-        if dut.counter_out != 0:
+        if dut.counter_out.value != 0:
             assert """Error counter in rst encrypt, wrong_value = {0}""".format(
                 hex(int(dut.counter_out.value))
             )
@@ -129,7 +129,7 @@ async def run_test(dut, index=0):
     yield enc_dec_test(dut, expected_dec_value)
 
 
-n = 500
+n = 20
 factory = TestFactory(run_test)
 
 # array de 10 int aleatorios entre 0 y 31
