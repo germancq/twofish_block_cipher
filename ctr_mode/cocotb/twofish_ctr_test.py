@@ -11,13 +11,11 @@ import os
 import random
 import time
 
+import cocotb
 import numpy as np
 import twofish_ctr
-
-import cocotb
 from cocotb.clock import Clock
 from cocotb.regression import TestFactory
-from cocotb.result import ReturnValue, TestFailure
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
 home = os.getenv("HOME")
@@ -41,7 +39,7 @@ IV_LEN = 128
 
 
 def setup_function(dut, key, IV, text_input, num_block):
-    cocotb.fork(Clock(dut.clk, CLK_PERIOD).start())
+    cocotb.start_soon(Clock(dut.clk, CLK_PERIOD, unit="ns").start())
     dut.key.value = key
     dut.IV.value = IV
     dut.text_input.value = text_input
@@ -55,32 +53,26 @@ async def rst_function_test(dut):
 
     await n_cycles_clock(dut, 10)
 
-    if dut.R_i[0] != 0:
-        raise TestFailure(
-            """Error R0 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R_i[0].value)))
+    if dut.R_i[0].value != 0:
+        assert """Error R0 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R_i[0].value))
         )
-    if dut.R_i[1] != 0:
-        raise TestFailure(
-            """Error R1 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R_i[1].value)))
+    if dut.R_i[1].value != 0:
+        assert """Error R1 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R_i[1].value))
         )
-    if dut.R_i[2] != 0:
-        raise TestFailure(
-            """Error R2 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R_i[2].value)))
+    if dut.R_i[2].value != 0:
+        assert """Error R2 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R_i[2].value))
         )
-    if dut.R_i[3] != 0:
-        raise TestFailure(
-            """Error R3 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R_i[3].value)))
+    if dut.R_i[3].value != 0:
+        assert """Error R3 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R_i[3].value))
         )
 
-    if dut.counter_out != 0:
-        raise TestFailure(
-            """Error counter in rst encrypt, wrong_value = {0}""".format(
-                hex(int(dut.counter_out.value))
-            )
+    if dut.counter_out.value != 0:
+        assert """Error counter in rst encrypt, wrong_value = {0}""".format(
+            hex(int(dut.counter_out.value))
         )
 
     dut.rst.value = 0
@@ -112,10 +104,8 @@ async def enc_dec_test(dut, block_number, text_input, expected_value):
 
     print(hex(int(dut.text_output.value)))
     if dut.text_output != expected_value:
-        raise TestFailure(
-            """Error enc_test,wrong value = {0}, expected value is {1}""".format(
-                hex(int(dut.text_output.value)), hex(expected_value)
-            )
+        assert """Error enc_test,wrong value = {0}, expected value is {1}""".format(
+            hex(int(dut.text_output.value)), hex(expected_value)
         )
 
 

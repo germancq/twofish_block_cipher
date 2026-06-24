@@ -113,11 +113,11 @@ module twofish_ctr (
   adder #(
       .N(128)
   ) adder_inst (
-      .a  (IV),
-      .b  (block_number),
+      .a(IV),
+      .b(block_number),
       .cin(0),
       .sum(text),
-      .c  ()
+      .cout()
   );
 
   //stage
