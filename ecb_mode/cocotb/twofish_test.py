@@ -22,16 +22,16 @@ home = os.getenv("HOME")
 
 CLK_PERIOD = 20  # 50 MHz
 
-# the keyword yield
+# the keyword await
 #   Testbenches built using Cocotb use coroutines.
 #   While the coroutine is executing the simulation is paused.
-#   The coroutine uses the yield keyword
+#   The coroutine uses the await keyword
 #   to pass control of execution back to
 #   the simulator and simulation time can advance again.
 #
-#   yield return when the 'Trigger' is resolve
+#   await return when the 'Trigger' is resolve
 #
-#   Coroutines may also yield a list of triggers
+#   Coroutines may also await a list of triggers
 #   to indicate that execution should resume if any of them fires
 
 
@@ -45,20 +45,20 @@ def setup_function(dut, key, enc_dec, text_input):
 
 async def rst_function_test(dut, enc_dec):
 
-    dut.rst = 1
+    dut.rst.value = 1
 
-    yield n_cycles_clock(dut, 10)
+    await n_cycles_clock(dut, 10)
 
-    if dut.R0 != 0:
+    if dut.R0.value != 0:
         assert """Error R0 in rst, wrong_value = {0}""".format(
             hex(int(dut.R0.value)))
-    if dut.R1 != 0:
+    if dut.R1.value != 0:
         assert """Error R1 in rst, wrong_value = {0}""".format(
             hex(int(dut.R1.value)))
-    if dut.R2 != 0:
+    if dut.R2.value != 0:
         assert """Error R2 in rst, wrong_value = {0}""".format(
             hex(int(dut.R2.value)))
-    if dut.R3 != 0:
+    if dut.R3.value != 0:
         assert """Error R3 in rst, wrong_value = {0}""".format(
             hex(int(dut.R3.value)))
 
@@ -73,7 +73,7 @@ async def rst_function_test(dut, enc_dec):
                 hex(int(dut.counter_out.value))
             )
 
-    dut.rst = 0
+    dut.rst.value = 0
 
 
 async def enc_dec_test(dut, expected_value):
@@ -94,7 +94,7 @@ async def enc_dec_test(dut, expected_value):
             print(hex(int(dut.R3.value)))
             print('//////////////////////////')
             """
-        yield n_cycles_clock(dut, 1)
+        await n_cycles_clock(dut, 1)
 
     print(hex(int(dut.text_output.value)))
     if dut.text_output.value != expected_value:
@@ -105,8 +105,8 @@ async def enc_dec_test(dut, expected_value):
 
 async def n_cycles_clock(dut, n):
     for i in range(0, n):
-        yield RisingEdge(dut.clk)
-        yield FallingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await FallingEdge(dut.clk)
 
 
 async def run_test(dut, index=0):
@@ -120,13 +120,13 @@ async def run_test(dut, index=0):
     expected_dec_value = sw_model.decrypt(text)
 
     setup_function(dut, key, 0, text)
-    yield rst_function_test(dut, 0)
-    yield enc_dec_test(dut, expected_enc_value)
+    await rst_function_test(dut, 0)
+    await enc_dec_test(dut, expected_enc_value)
     # decrypt
     # print("DECRYPT")
     setup_function(dut, key, 1, text)
-    yield rst_function_test(dut, 1)
-    yield enc_dec_test(dut, expected_dec_value)
+    await rst_function_test(dut, 1)
+    await enc_dec_test(dut, expected_dec_value)
 
 
 n = 20
