@@ -43,8 +43,7 @@ def setup_function(dut, key, enc_dec, text_input):
     dut.rst = 1
 
 
-@cocotb.coroutine
-def rst_function_test(dut, enc_dec):
+async def rst_function_test(dut, enc_dec):
 
     dut.rst = 1
 
@@ -77,8 +76,7 @@ def rst_function_test(dut, enc_dec):
     dut.rst = 0
 
 
-@cocotb.coroutine
-def enc_dec_test(dut, expected_value):
+async def enc_dec_test(dut, expected_value):
     print("VERILOG_VALUES")
     while dut.end_signal.value == 0:
         if dut.current_state.value == 3:
@@ -105,15 +103,13 @@ def enc_dec_test(dut, expected_value):
         )
 
 
-@cocotb.coroutine
-def n_cycles_clock(dut, n):
+async def n_cycles_clock(dut, n):
     for i in range(0, n):
         yield RisingEdge(dut.clk)
         yield FallingEdge(dut.clk)
 
 
-@cocotb.coroutine
-def run_test(dut, index=0):
+async def run_test(dut, index=0):
 
     random.seed(index)
 
