@@ -6,24 +6,19 @@
 # Last Modified Date: 17.06.2026
 # Last Modified By  : German C.Quiveu <germancq@dte.us.es>
 
+import math
+import os
+import random
+import time
+
 import cocotb
 import numpy as np
-import time
-import random
-import math
-from cocotb.triggers import Timer, RisingEdge, FallingEdge
-from cocotb.regression import TestFactory
-from cocotb.result import TestFailure, ReturnValue
+import twofish
 from cocotb.clock import Clock
-
-
-import os
+from cocotb.regression import TestFactory
+from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
 home = os.getenv("HOME")
-abs_path_file_storage = (
-    home
-    + "/gitProjects/IPCores/block_ciphers/twofish_cipher/python_code/test_cases.HEX"
-)
 
 CLK_PERIOD = 20  # 50 MHz
 
@@ -41,7 +36,7 @@ CLK_PERIOD = 20  # 50 MHz
 
 
 def setup_function(dut, key, enc_dec, text_input):
-    cocotb.fork(Clock(dut.clk, CLK_PERIOD).start())
+    cocotb.start_soon(Clock(dut.clk, CLK_PERIOD, unit="ns").start())
     dut.key = key
     dut.enc_dec = enc_dec
     dut.text_input = text_input
@@ -56,39 +51,27 @@ def rst_function_test(dut, enc_dec):
     yield n_cycles_clock(dut, 10)
 
     if dut.R0 != 0:
-        raise TestFailure(
-            """Error R0 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R0.value)))
-        )
+        assert """Error R0 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R0.value)))
     if dut.R1 != 0:
-        raise TestFailure(
-            """Error R1 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R1.value)))
-        )
+        assert """Error R1 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R1.value)))
     if dut.R2 != 0:
-        raise TestFailure(
-            """Error R2 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R2.value)))
-        )
+        assert """Error R2 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R2.value)))
     if dut.R3 != 0:
-        raise TestFailure(
-            """Error R3 in rst, wrong_value = {0}""".format(
-                hex(int(dut.R3.value)))
-        )
+        assert """Error R3 in rst, wrong_value = {0}""".format(
+            hex(int(dut.R3.value)))
 
     if enc_dec == 1:
         if dut.counter_out != 15:
-            raise TestFailure(
-                """Error counter in rst decrypt, wrong_value = {0}""".format(
-                    hex(int(dut.counter_out.value))
-                )
+            assert """Error counter in rst decrypt, wrong_value = {0}""".format(
+                hex(int(dut.counter_out.value))
             )
     else:
         if dut.counter_out != 0:
-            raise TestFailure(
-                """Error counter in rst encrypt, wrong_value = {0}""".format(
-                    hex(int(dut.counter_out.value))
-                )
+            assert """Error counter in rst encrypt, wrong_value = {0}""".format(
+                hex(int(dut.counter_out.value))
             )
 
     dut.rst = 0
@@ -97,8 +80,8 @@ def rst_function_test(dut, enc_dec):
 @cocotb.coroutine
 def enc_dec_test(dut, expected_value):
     print("VERILOG_VALUES")
-    while dut.end_signal == 0:
-        if dut.current_state == 3:
+    while dut.end_signal.value == 0:
+        if dut.current_state.value == 3:
             """
             print('//////////////////////////')
             print(int(dut.counter_out.value))
@@ -116,11 +99,9 @@ def enc_dec_test(dut, expected_value):
         yield n_cycles_clock(dut, 1)
 
     print(hex(int(dut.text_output.value)))
-    if dut.text_output != expected_value:
-        raise TestFailure(
-            """Error enc_test,wrong value = {0}, expected value is {1}""".format(
-                hex(int(dut.text_output.value)), hex(expected_value)
-            )
+    if dut.text_output.value != expected_value:
+        assert """Error enc_test,wrong value = {0}, expected value is {1}""".format(
+            hex(int(dut.text_output.value)), hex(expected_value)
         )
 
 
@@ -134,24 +115,22 @@ def n_cycles_clock(dut, n):
 @cocotb.coroutine
 def run_test(dut, index=0):
 
-    with open(abs_path_file_storage, "rb+") as storage_file:
+    random.seed(index)
 
-        storage_file.seek((index * 64))
-        key = int.from_bytes(storage_file.read(16), byteorder="little")
-        text = int.from_bytes(storage_file.read(16), byteorder="little")
-        expected_enc_value = int.from_bytes(
-            storage_file.read(16), byteorder="little")
-        expected_dec_value = int.from_bytes(
-            storage_file.read(16), byteorder="little")
+    key = random.getrandbits(128)
+    text = random.getrandbits(128)
+    sw_model = twofish.Twofish(key)
+    expected_enc_value = sw_model.encrypt(text)
+    expected_dec_value = sw_model.decrypt(text)
 
-        setup_function(dut, key, 0, text)
-        yield rst_function_test(dut, 0)
-        yield enc_dec_test(dut, expected_enc_value)
-        # decrypt
-        # print("DECRYPT")
-        setup_function(dut, key, 1, text)
-        yield rst_function_test(dut, 1)
-        yield enc_dec_test(dut, expected_dec_value)
+    setup_function(dut, key, 0, text)
+    yield rst_function_test(dut, 0)
+    yield enc_dec_test(dut, expected_enc_value)
+    # decrypt
+    # print("DECRYPT")
+    setup_function(dut, key, 1, text)
+    yield rst_function_test(dut, 1)
+    yield enc_dec_test(dut, expected_dec_value)
 
 
 n = 500
